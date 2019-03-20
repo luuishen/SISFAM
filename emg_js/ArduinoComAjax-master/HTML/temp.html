@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>teste</title>
+	<script type="text/javascript">
+		function verifica(){
+			var checkbox = document.getElementById("stop");
+			var text = document.getElementById("text");
+			if(checkbox.checked == true){
+				alert("oi");
+			}else{
+				text.style.display = "none";
+			}
+
+		}
+		window.onload = function(){
+			var btn = document.getElementById("btn");
+			btn.addEventListener("click", function(event){
+				this.value="opa";
+				alert("elemento foi clicado"+event);
+			});	
+		}
+	</script>
+</head>
+<body>
+	<input type="checkbox" id="stop" onclick="verifica()" />Parar
+	<p id="text" style="display:none;">Teste</p>
+	<button type="button" id="btn">gay</button>
+</body>
+</html>

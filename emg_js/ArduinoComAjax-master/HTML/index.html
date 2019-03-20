@@ -1,0 +1,171 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Arduino com AJAX</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>-->
+		<script src="js/jquery.js"></script>
+		<link rel="stylesheet" href="./css/bootstrap.min.css">
+		<link rel="stylesheet" href="./css/bootstrap-theme.min.css">
+		<script src="./js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="./js/jsapi.js"></script>
+		<style type="text/css">
+			.clean { padding: 0; margin: 0;}
+		</style>
+	</head>
+<body>
+<div class="container">
+	<div class="row">	
+		<div class="page-header">
+		  <h1>Arduino com AJAX</h1>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-3 well">
+			<p>
+				Status: <span id="status" class="label"></span>
+			</p>
+			<p>
+				<h4>Sensor 1</h4>
+				Valor: <strong><span id="sensor1" ></span></strong>
+			</p>
+			<!-- <p>
+				<h4>Sensor 2</h4>
+				Valor: <strong><span id="sensor2"></span></strong>
+			</p> -->
+			<p>
+				<h4>Botões</h4>
+				Botão 1:
+				<div class="btn-group">
+				  <button type="button" class="btn btn-default botaoEnvia" id="001">Liga</button>
+				  <button type="button" class="btn btn-default botaoEnvia" id="002">Desliga</button>
+				</div>
+				<span id="resultLUZ1"></span>
+				<br/>
+				<!--<input type="checkbox" id="checkPausar"/>--> 
+				<input type="button" class="btn btn-default" id="btnPausar" value="Iniciar"/>
+				<br/>
+				<!-- Botão 2:
+				<div class="btn-group">
+				  <button type="button" class="btn btn-default botaoEnvia" id="003">Liga</button>
+				  <button type="button" class="btn btn-default botaoEnvia" id="004">Desliga</button>
+				</div>
+				<span id="resultLUZ2"></span> -->
+			</p>	
+		</div>
+		<div class="col-md-9">
+			<div class="clean" id="chart_div" style="width: 110%; height: 500px;"></div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+//var url = 'http://177.177.165.14:50';
+var url = 'http://localhost/test.php';
+
+google.load("visualization", "1", {packages:["corechart"]});
+google.setOnLoadCallback(drawChart);
+	var data; 
+	var chart;
+	var options = {
+		title: 'Dados dos Sensores Arduino com Ajax',
+		curveType: 'function'
+	};
+
+$(document).ready(function(){
+	$('.botaoEnvia').click(function(){
+        var valor = $(this).attr('id');
+        enviaDados(valor);
+    });
+	
+	function enviaDados(dado){		
+    	$.ajax({
+		    url: url,
+		    data: { 'acao': dado},
+		    dataType: 'jsonp',
+		    crossDomain: true,
+		    jsonp: false,
+		    jsonpCallback: 'dados',
+		    success: function(data,status,xhr) {
+				// posso ler dados e retoranar na pagina para avisar se a luz ta ligada ou desligada.
+				console.log(data.LUZ1);
+				console.log(data.LUZ2);
+				$('#resultLUZ1').text(statusReturn(data.LUZ1)); 
+				$('#resultLUZ2').text(statusReturn(data.LUZ2));
+		    }
+		  });
+        return false;
+    }
+
+    function statusReturn (valor) {
+    	if(valor == 0) {
+    		return "Ligada";
+    	}
+    	else if(valor == 1) {
+    		return "Desligada";
+    	}
+    	 else { return "Desconhecido";}
+    }
+
+    var i = 0;
+	function fazerRequisicao(){
+		$('#status').removeClass().addClass('label label-warning');
+		$('#status').text("Enviando Requisição...");
+    	var req = $.ajax({
+		    url: url,
+		    data: { '': ''}, // usaremos em proximas versões
+		    dataType: 'jsonp', // IMPORTANTE
+		    crossDomain: true, // IMPORTANTE
+		    jsonp: false,
+		    jsonpCallback: 'dados', // IMPORTANTE
+		    success: function(data,status,xhr) {
+				$('#status').removeClass().addClass('label label-success');
+				$('#status').text("Requisição Recebida!");
+				$('#sensor1').text(data.sensor1);
+				$('#sensor2').text(data.sensor2);
+				$('#resultLUZ1').text(statusReturn(data.LUZ1));
+				$('#resultLUZ2').text(statusReturn(data.LUZ2));
+				i++;
+				setGrafico(i,data.sensor1,data.sensor2);
+				console.log(data);
+		    }
+		  });
+	      return false;	
+    }
+    var t = "";
+    $('#btnPausar').click(function(){
+    	if($(this).val()=="Iniciar"){
+	    	$(this).val("Parar");
+    		t = setInterval(fazerRequisicao, 50);
+    	}else{
+    		if($(this).val()=="Parar"){
+    			$('#status').removeClass().addClass('label label-danger');
+    			$(this).val("Iniciar");
+    			$('#status').text("Requisição Pausada");
+    			clearInterval(t);
+    		}    		
+    	}	    	
+    });
+
+});
+
+	function drawChart() {
+  		data = new google.visualization.DataTable();
+		data.addColumn('number', 'Registro'); // Implicit domain column.
+		data.addColumn('number', 'Sensor1'); // Implicit data column.
+		data.addRow();
+    }
+
+	function setGrafico(i, sensor1,sensor2){
+		data.addRow([i,sensor1]);
+        chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+        return false;
+	}
+  
+</script>
+
+
+</body>
+</html>
